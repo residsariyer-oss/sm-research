@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KİŞİ ARAMA MOTORU</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #e8ff00;
+    --accent2: #ff3c78;
+    --accent3: #00d4ff;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --card: #14141e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-top: 20px;
+  }
+
+  .logo-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  h1 {
+    font-size: clamp(32px, 6vw, 64px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  h1 span.hl {
+    color: var(--accent);
+    position: relative;
+  }
+
+  h1 span.hl::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent2);
+    border-radius: 2px;
+  }
+
+  .subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* FORM SECTION */
+  .form-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .field-grid .full {
+    grid-column: 1 / -1;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  input[type="text"], input[type="tel"], input[type="email"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232,255,0,0.08);
+  }
+
+  input::placeholder {
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  /* PHOTO UPLOAD */
+  .photo-drop {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .photo-drop:hover {
+    border-color: var(--accent);
+    background: rgba(232,255,0,0.03);
+  }
+
+  .photo-drop.has-photo {
+    border-color: var(--accent);
+    border-style: solid;
+  }
+
+  .photo-drop input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .photo-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+    display: none;
+    margin: 0 auto 12px;
+  }
+
+  .photo-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .photo-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .photo-text strong {
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  /* PLATFORM SELECTOR */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .platform-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    user-select: none;
+  }
+
+  .platform-btn:hover {
+    border-color: var(--muted);
+    transform: translateY(-1px);
+  }
+
+  .platform-btn.selected {
+    border-color: var(--accent);
+    background: rgba(232,255,0,0.06);
+    box-shadow: 0 0 12px rgba(232,255,0,0.1);
+  }
+
+  .platform-btn .icon {
+    font-size: 20px;
+  }
+
+  .platform-btn .name {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .platform-btn.selected .name {
+    color: var(--accent);
+  }
+
+  /* SELECT ALL */
+  .select-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .mini-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mini-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* SEARCH BUTTON */
+  .search-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .search-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232,255,0,0.3);
+  }
+
+  .search-btn:hover::before { opacity: 1; }
+  .search-btn:active { transform: translateY(0); }
+
+  /* RESULTS */
+  #results-section {
+    display: none;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .results-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .result-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 600px) {
+    .results-grid { grid-template-columns: 1fr; }
+    .field-grid { grid-template-columns: 1fr; }
+    .field-grid .full { grid-column: 1; }
+  }
+
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card:hover {
+    border-color: var(--muted);
+    transform: translateY(-2px);
+  }
+
+  .result-card a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 14px;
+  }
+
+  .result-platform-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border-radius: 10px;
+  }
+
+  .result-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .result-platform-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .result-query {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+
+  .result-url {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-arrow {
+    color: var(--accent);
+    font-size: 16px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .result-card:hover .result-arrow {
+    opacity: 1;
+    transform: translateX(3px);
+  }
+
+  /* tags for result categories */
+  .result-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+
+  .tag-name { background: rgba(232,255,0,0.12); color: var(--accent); }
+  .tag-phone { background: rgba(0,212,255,0.12); color: var(--accent3); }
+  .tag-email { background: rgba(255,60,120,0.12); color: var(--accent2); }
+  .tag-photo { background: rgba(160,100,255,0.12); color: #b87fff; }
+  .tag-school { background: rgba(255,165,0,0.12); color: #ffaa33; }
+
+  /* NO CRITERIA */
+  .warning-box {
+    background: rgba(255,60,120,0.08);
+    border: 1px solid rgba(255,60,120,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    text-align: center;
+    display: none;
+  }
+
+  /* FOOTER NOTE */
+  .note {
+    margin-top: 32px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.7;
+    text-align: center;
+  }
+
+  .note strong { color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <span class="logo-tag">// osint tool v1.0</span>
+    <h1>KİŞİ <span class="hl">ARAMA</span><br>MOTORU</h1>
+    <p class="subtitle">sosyal medya & web profil tespit sistemi</p>
+  </header>
+
+  <!-- FOTOĞRAF -->
+  <div class="form-section">
+    <div class="section-label">01 — Fotoğraf</div>
+    <div class="photo-drop" id="photoDrop">
+      <input type="file" accept="image/*" id="photoInput" onchange="handlePhoto(this)">
+      <img class="photo-preview" id="photoPreview">
+      <div class="photo-icon" id="photoIcon">📷</div>
+      <div class="photo-text">
+        <strong id="photoLabel">Fotoğraf Yükle</strong>
+        Kişinin net bir yüz fotoğrafı (opsiyonel)
+      </div>
+    </div>
+  </div>
+
+  <!-- KİŞİSEL BİLGİLER -->
+  <div class="form-section">
+    <div class="section-label">02 — Kişisel Bilgiler</div>
+    <div class="field-grid">
+      <div class="field full">
+        <label>Ad Soyad</label>
+        <input type="text" id="fullName" placeholder="Örn: Ayşe Yılmaz">
+      </div>
+      <div class="field">
+        <label>Telefon Numarası</label>
+        <input type="tel" id="phone" placeholder="+90 5xx xxx xx xx">
+      </div>
+      <div class="field">
+        <label>E-Posta Adresi</label>
+        <input type="email" id="email" placeholder="ornek@mail.com">
+      </div>
+      <div class="field">
+        <label>Okul / Üniversite</label>
+        <input type="text" id="school" placeholder="Örn: Boğaziçi Üniversitesi">
+      </div>
+      <div class="field">
+        <label>Bölüm / Departman</label>
+        <input type="text" id="department" placeholder="Örn: Bilgisayar Mühendisliği">
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATFORM SEÇİMİ -->
+  <div class="form-section">
+    <div class="section-label">03 — Platform Seçimi</div>
+    <div class="select-row">
+      <button class="mini-btn" onclick="selectAll()">Tümünü Seç</button>
+      <button class="mini-btn" onclick="deselectAll()">Temizle</button>
+    </div>
+    <div class="platform-grid" id="platformGrid">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+
+  <div class="warning-box" id="warningBox">
+    ⚠ Lütfen en az bir kriter girin ve en az bir platform seçin.
+  </div>
+
+  <button class="search-btn" onclick="runSearch()">
+    🔍 &nbsp; ARAMAYJ BAŞLAT
+  </button>
+
+  <!-- RESULTS -->
+  <div id="results-section">
+    <div class="results-header">
+      <span class="results-title">// Arama Sonuçları</span>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+    <div class="results-grid" id="resultsGrid"></div>
+  </div>
+
+  <div class="note">
+    <strong>⚠ ETİK KULLANIM NOTU:</strong> Bu araç yalnızca kendi dijital ayak izinizi veya açık rıza gösterilmiş kişilerin kamuya açık sosyal medya profillerini bulmak amacıyla kullanılmalıdır. Başkalarını izinsiz araştırmak etik değildir ve yerel yasalara aykırı olabilir.
+  </div>
+
+</div>
+
+<script>
+const PLATFORMS = [
+  { id: 'google',       name: 'Google',       icon: '🔍', color: '#4285f4' },
+  { id: 'google_img',   name: 'Google Görsel', icon: '🖼️', color: '#ea4335' },
+  { id: 'linkedin',     name: 'LinkedIn',     icon: '💼', color: '#0077b5' },
+  { id: 'twitter',      name: 'X / Twitter',  icon: '🐦', color: '#1da1f2' },
+  { id: 'instagram',    name: 'Instagram',    icon: '📸', color: '#e1306c' },
+  { id: 'facebook',     name: 'Facebook',     icon: '📘', color: '#1877f2' },
+  { id: 'tiktok',       name: 'TikTok',       icon: '🎵', color: '#ff0050' },
+  { id: 'youtube',      name: 'YouTube',      icon: '▶️', color: '#ff0000' },
+  { id: 'github',       name: 'GitHub',       icon: '💻', color: '#333' },
+  { id: 'pinterest',    name: 'Pinterest',    icon: '📌', color: '#e60023' },
+  { id: 'reddit',       name: 'Reddit',       icon: '🔴', color: '#ff4500' },
+  { id: 'snapchat',     name: 'Snapchat',     icon: '👻', color: '#fffc00' },
+  { id: 'twitch',       name: 'Twitch',       icon: '🟣', color: '#9146ff' },
+  { id: 'spotify',      name: 'Spotify',      icon: '🎧', color: '#1db954' },
+  { id: 'eksi',         name: 'Ekşi Sözlük',  icon: '🌿', color: '#81c341' },
+  { id: 'wordpress',    name: 'WordPress',    icon: '📝', color: '#21759b' },
+];
+
+let selected = new Set(PLATFORMS.map(p => p.id)); // hepsi seçili başlat
+let photoFile = null;
+
+// Render platforms
+const grid = document.getElementById('platformGrid');
+PLATFORMS.forEach(p => {
+  const btn = document.createElement('div');
+  btn.className = 'platform-btn selected';
+  btn.id = 'plt_' + p.id;
+  btn.innerHTML = `<span class="icon">${p.icon}</span><span class="name">${p.name}</span>`;
+  btn.onclick = () => togglePlatform(p.id, btn);
+  grid.appendChild(btn);
+});
+
+function togglePlatform(id, btn) {
+  if (selected.has(id)) {
+    selected.delete(id);
+    btn.classList.remove('selected');
+  } else {
+    selected.add(id);
+    btn.classList.add('selected');
+  }
+}
+
+function selectAll() {
+  PLATFORMS.forEach(p => {
+    selected.add(p.id);
+    document.getElementById('plt_' + p.id).classList.add('selected');
+  });
+}
+
+function deselectAll() {
+  PLATFORMS.forEach(p => {
+    selected.delete(p.id);
+    document.getElementById('plt_' + p.id).classList.remove('selected');
+  });
+}
+
+function handlePhoto(input) {
+  if (input.files && input.files[0]) {
+    photoFile = input.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('photoPreview');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      document.getElementById('photoIcon').style.display = 'none';
+      document.getElementById('photoLabel').textContent = '✓ Fotoğraf Yüklendi';
+      document.getElementById('photoDrop').classList.add('has-photo');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function buildQuery(criteriaList) {
+  return criteriaList.filter(Boolean).join(' ');
+}
+
+function getSearchURLs() {
+  const name       = document.getElementById('fullName').value.trim();
+  const phone      = document.getElementById('phone').value.trim();
+  const email      = document.getElementById('email').value.trim();
+  const school     = document.getElementById('school').value.trim();
+  const dept       = document.getElementById('department').value.trim();
+
+  const hasCriteria = name || phone || email || school || dept || photoFile;
+  if (!hasCriteria) return null;
+
+  // Build smart combined queries
+  const nameSchool = buildQuery([name, school, dept]);
+  const nameBasic  = buildQuery([name]);
+  const fullQ      = buildQuery([name, school, dept, email]);
+
+  const results = [];
+
+  const add = (platformId, label, url, tag) => {
+    if (selected.has(platformId)) {
+      results.push({ platformId, label, url, tag });
+    }
+  };
+
+  const enc = s => encodeURIComponent(s);
+
+  // Google genel arama — birden fazla kriter var ise hepsini birleştir
+  if (name || school || email) {
+    add('google', `"${nameSchool || email}" site arama`,
+      `https://www.google.com/search?q=${enc('"' + fullQ + '"')}`, 'tag-name');
+  }
+  if (phone) {
+    add('google', `Telefon: ${phone}`,
+      `https://www.google.com/search?q=${enc(phone)}`, 'tag-phone');
+  }
+  if (email) {
+    add('google', `E-posta: ${email}`,
+      `https://www.google.com/search?q=${enc('"' + email + '"')}`, 'tag-email');
+  }
+
+  // Google Görsel
+  if (name) {
+    add('google_img', `${name} — görsel arama`,
+      `https://www.google.com/search?tbm=isch&q=${enc(nameBasic)}`, 'tag-photo');
+  }
+
+  // LinkedIn
+  if (name) {
+    add('linkedin', `${nameSchool || name}`,
+      `https://www.linkedin.com/search/results/people/?keywords=${enc(nameSchool || name)}`, 'tag-name');
+  }
+  if (school) {
+    add('linkedin', `${school} çalışanları`,
+      `https://www.linkedin.com/search/results/people/?keywords=${enc(name + ' ' + school)}`, 'tag-school');
+  }
+
+  // Twitter / X
+  if (name) {
+    add('twitter', `@${name} arama`,
+      `https://twitter.com/search?q=${enc(nameBasic)}&f=user`, 'tag-name');
+  }
+  if (phone) {
+    add('twitter', `Telefon ile arama`,
+      `https://twitter.com/search?q=${enc(phone)}`, 'tag-phone');
+  }
+
+  // Instagram
+  if (name) {
+    add('instagram', `${name}`,
+      `https://www.instagram.com/explore/search/keyword/?q=${enc(nameBasic)}`, 'tag-name');
+  }
+
+  // Facebook
+  if (name) {
+    add('facebook', `${name} — kişiler`,
+      `https://www.facebook.com/search/people/?q=${enc(nameBasic)}`, 'tag-name');
+  }
+  if (email) {
+    add('facebook', `E-posta ile arama`,
+      `https://www.facebook.com/search/people/?q=${enc(email)}`, 'tag-email');
+  }
+
+  // TikTok
+  if (name) {
+    add('tiktok', `@${name}`,
+      `https://www.tiktok.com/search/user?q=${enc(nameBasic)}`, 'tag-name');
+  }
+
+  // YouTube
+  if (name) {
+    add('youtube', `${name} kanalları`,
+      `https://www.youtube.com/results?search_query=${enc(nameBasic)}&sp=EgIQAg%253D%253D`, 'tag-name');
+  }
+
+  // GitHub
+  if (name) {
+    add('github', `${name}`,
+      `https://github.com/search?q=${enc(nameBasic)}&type=users`, 'tag-name');
+  }
+  if (email) {
+    add('github', `${email}`,
+      `https://github.com/search?q=${enc(email)}&type=users`, 'tag-email');
+  }
+
+  // Pinterest
+  if (name) {
+    add('pinterest', `${name}`,
+      `https://www.pinterest.com/search/users/?q=${enc(nameBasic)}`, 'tag-name');
+  }
+
+  // Reddit
+  if (name) {
+    add('reddit', `u/${name}`,
+      `https://www.reddit.com/search/?q=${enc(nameBasic)}&type=user`, 'tag-name');
+  }
+
+  // Snapchat
+  if (name) {
+    add('snapchat', `${name}`,
+      `https://www.snapchat.com/add/${enc(nameBasic.replace(/ /g,''))}`, 'tag-name');
+  }
+
+  // Twitch
+  if (name) {
+    add('twitch', `${name}`,
+      `https://www.twitch.tv/${enc(nameBasic.replace(/ /g,'').toLowerCase())}`, 'tag-name');
+  }
+
+  // Spotify
+  if (name) {
+    add('spotify', `${name}`,
+      `https://open.spotify.com/search/${enc(nameBasic)}/users`, 'tag-name');
+  }
+
+  // Ekşi Sözlük
+  if (name) {
+    add('eksi', `${name} — ekşi`,
+      `https://eksisozluk.com/?q=${enc(nameBasic)}`, 'tag-name');
+  }
+
+  // WordPress / blog
+  if (name) {
+    add('wordpress', `${name} blog`,
+      `https://en.search.wordpress.com/?q=${enc(nameBasic)}`, 'tag-name');
+  }
+
+  return results;
+}
+
+function runSearch() {
+  const warning = document.getElementById('warningBox');
+
+  const name  = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const school= document.getElementById('school').value.trim();
+  const dept  = document.getElementById('department').value.trim();
+  const hasCrit = name || phone || email || school || dept || photoFile;
+
+  if (!hasCrit || selected.size === 0) {
+    warning.style.display = 'block';
+    setTimeout(() => warning.style.display = 'none', 3000);
+    return;
+  }
+
+  warning.style.display = 'none';
+  const urls = getSearchURLs();
+  if (!urls || urls.length === 0) {
+    warning.style.display = 'block';
+    return;
+  }
+
+  renderResults(urls);
+}
+
+function renderResults(urls) {
+  const section = document.getElementById('results-section');
+  const grid    = document.getElementById('resultsGrid');
+  const count   = document.getElementById('resultCount');
+
+  grid.innerHTML = '';
+  count.textContent = `${urls.length} arama linki oluşturuldu`;
+  section.style.display = 'block';
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const pMap = {};
+  PLATFORMS.forEach(p => pMap[p.id] = p);
+
+  urls.forEach((item, i) => {
+    const p = pMap[item.platformId];
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.style.animationDelay = `${i * 0.05}s`;
+    card.innerHTML = `
+      <a href="${item.url}" target="_blank" rel="noopener noreferrer">
+        <div class="result-platform-icon">${p.icon}</div>
+        <div class="result-info">
+          <div class="result-platform-name">${p.name}</div>
+          <div class="result-query">${item.label}</div>
+          <div class="result-url">${item.url.substring(0,55)}…</div>
+          <span class="result-tag ${item.tag}">${tagLabel(item.tag)}</span>
+        </div>
+        <div class="result-arrow">→</div>
+      </a>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function tagLabel(cls) {
+  const map = {
+    'tag-name': 'İSİM',
+    'tag-phone': 'TELEFON',
+    'tag-email': 'E-POSTA',
+    'tag-photo': 'GÖRSEL',
+    'tag-school': 'OKUL',
+  };
+  return map[cls] || cls;
+}
+</script>
+</body>
+</html>
